@@ -70,7 +70,7 @@ export default function Register() {
             <PasswordInput name="password" value={form.password} onChange={onChange} autoComplete="new-password" minLength={6} required {...bind('password')} onVisibleChange={onVisibleChange('password')} />
           </label>
           <label className="field">
-            <span>Nhập lại</span>
+            <span>Nhập lại mật khẩu</span>
             <PasswordInput name="confirm" value={form.confirm} onChange={onChange} autoComplete="new-password" required {...bind('confirm')} onVisibleChange={onVisibleChange('confirm')} />
           </label>
         </div>

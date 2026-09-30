@@ -65,7 +65,8 @@ a {
 .auth {
   min-height: 100svh;
   display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(400px, 520px);
+  /* Canvas ~77%, panel ~23% (panel tối thiểu 360px để form không bị bóp) */
+  grid-template-columns: minmax(0, 77fr) minmax(360px, 23fr);
 }
 
 .stage {
@@ -154,7 +155,7 @@ a {
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 56px 48px;
+  padding: 48px 30px;
   background: var(--deep);
   border-left: 1px solid var(--line);
 }
@@ -202,8 +203,8 @@ form {
 
 .field-row {
   display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 12px;
+  grid-template-columns: 1fr;
+  gap: 16px;
 }
 
 input {

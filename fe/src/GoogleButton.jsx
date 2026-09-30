@@ -15,7 +15,7 @@ export default function GoogleButton({ text, remember = true, onSuccess, onError
         text={text}
         theme="filled_black"
         shape="rectangular"
-        width="360"
+        width="300"
         locale="vi"
         onSuccess={async ({ credential }) => {
           try {
