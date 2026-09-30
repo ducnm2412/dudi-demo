@@ -1,3 +1,10 @@
+export const EVENT_TAGS = {
+  online: 'Online',
+  meeting: 'Meeting',
+  offline: 'Trực tiếp',
+  break: 'Nghỉ',
+};
+
 export function fmtTime(date) {
   return new Date(date).toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' });
 }

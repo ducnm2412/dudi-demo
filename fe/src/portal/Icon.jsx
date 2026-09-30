@@ -61,6 +61,48 @@ const PATHS = {
   plus: <path d="M12 5v14M5 12h14" />,
   chevronLeft: <path d="m15 18-6-6 6-6" />,
   chevronRight: <path d="m9 18 6-6-6-6" />,
+  chevronDown: <path d="m6 9 6 6 6-6" />,
+  arrowRight: <path d="M5 12h14M13 6l6 6-6 6" />,
+  home: (
+    <>
+      <path d="M3 10.5 12 3l9 7.5" />
+      <path d="M5 9.5V20a1 1 0 0 0 1 1h4v-6h4v6h4a1 1 0 0 0 1-1V9.5" />
+    </>
+  ),
+  search: (
+    <>
+      <circle cx="11" cy="11" r="7" />
+      <path d="m20 20-3.5-3.5" />
+    </>
+  ),
+  rocket: (
+    <>
+      <path d="M4.5 16.5c-1.5 1.26-2 5-2 5s3.74-.5 5-2c.71-.84.7-2.13-.09-2.91a2.18 2.18 0 0 0-2.91-.09z" />
+      <path d="m12 15-3-3a22 22 0 0 1 2-3.95A12.88 12.88 0 0 1 22 2c0 2.72-.78 7.5-6 11a22.35 22.35 0 0 1-4 2z" />
+      <path d="M9 12H4s.55-3.03 2-4c1.62-1.08 5 0 5 0M12 15v5s3.03-.55 4-2c1.08-1.62 0-5 0-5" />
+    </>
+  ),
+  users: (
+    <>
+      <circle cx="9" cy="8" r="4" />
+      <path d="M2 21a7 7 0 0 1 14 0M16 3.13a4 4 0 0 1 0 7.75M22 21a7 7 0 0 0-5-6.7" />
+    </>
+  ),
+  clipboard: (
+    <>
+      <rect x="4" y="4" width="16" height="18" rx="2" />
+      <path d="M9 2h6v4H9zM8 11h8M8 15h5" />
+    </>
+  ),
+  checkSquare: (
+    <>
+      <rect x="3" y="3" width="18" height="18" rx="3" />
+      <path d="m8 12 3 3 5-6" />
+    </>
+  ),
+  menu: <path d="M4 6h16M4 12h16M4 18h16" />,
+  heart: <path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z" />,
+  check: <path d="M20 6 9 17l-5-5" />,
 };
 
 export default function Icon({ name, size = 24, strokeWidth = 2 }) {

@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import Icon from './Icon';
-import { dayLabel, fmtDuration, fmtTime, monthKey, monthLabel, shiftMonth } from './format';
+import { dayLabel, EVENT_TAGS, fmtDuration, fmtTime, monthKey, monthLabel, shiftMonth } from './format';
 
 export function ProfilePanel({ user }) {
   return (
@@ -149,6 +149,72 @@ export function TasksPanel({ tasks, loaded, addTask, toggleTask, removeTask }) {
   );
 }
 
+export function EventsPanel({ events, loaded, addEvent, removeEvent }) {
+  const [form, setForm] = useState({ time: '09:00', title: '', tag: 'online' });
+  const [error, setError] = useState('');
+  const [saving, setSaving] = useState(false);
+  const onChange = (e) => setForm({ ...form, [e.target.name]: e.target.value });
+
+  const onSubmit = async (e) => {
+    e.preventDefault();
+    if (!form.title.trim()) return;
+    setSaving(true);
+    setError('');
+    try {
+      await addEvent({ ...form, title: form.title.trim() });
+      setForm((f) => ({ ...f, title: '' }));
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const remove = async (ev) => {
+    setError('');
+    try {
+      await removeEvent(ev);
+    } catch (err) {
+      setError(err.message);
+    }
+  };
+
+  return (
+    <div className="events">
+      <form className="event-form" onSubmit={onSubmit}>
+        <div className="event-form-row">
+          <input type="time" name="time" value={form.time} onChange={onChange} required aria-label="Giờ" />
+          <select name="tag" value={form.tag} onChange={onChange} aria-label="Hình thức">
+            {Object.entries(EVENT_TAGS).map(([k, v]) => (
+              <option key={k} value={k}>{v}</option>
+            ))}
+          </select>
+        </div>
+        <input name="title" value={form.title} onChange={onChange} placeholder="Tên sự kiện, ví dụ: Họp team dự án" maxLength={120} aria-label="Tên sự kiện" />
+        <button type="submit" className="primary" disabled={saving || !form.title.trim()}>
+          <Icon name="plus" size={18} /> Thêm vào lịch hôm nay
+        </button>
+      </form>
+
+      {error && <p className="error">{error}</p>}
+      {loaded && events.length === 0 && <p className="empty">Hôm nay chưa có sự kiện nào.</p>}
+
+      <ul className="event-list">
+        {events.map((ev) => (
+          <li key={ev.id}>
+            <span className="event-time">{ev.time}</span>
+            <span className="event-title">{ev.title}</span>
+            <span className={`tag tag-${ev.tag}`}>{EVENT_TAGS[ev.tag]}</span>
+            <button type="button" className="icon-btn" onClick={() => remove(ev)} aria-label={`Xoá "${ev.title}"`}>
+              <Icon name="trash" size={18} />
+            </button>
+          </li>
+        ))}
+      </ul>
+    </div>
+  );
+}
+
 export function NotificationsPanel({ notices, onOpen }) {
   if (!notices.length) return <p className="empty">Không có thông báo mới.</p>;
   return (
@@ -156,6 +222,7 @@ export function NotificationsPanel({ notices, onOpen }) {
       {notices.map((n) => (
         <li key={n.id}>
           <p>{n.text}</p>
+          <span className="notice-time">{n.time}</span>
           {n.action && (
             <button type="button" className="link-btn" onClick={() => onOpen(n.action.panel)}>
               {n.action.label}

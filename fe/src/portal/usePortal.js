@@ -7,6 +7,8 @@ export function usePortal(token) {
   const [attendanceLoaded, setAttendanceLoaded] = useState(false);
   const [tasks, setTasks] = useState([]);
   const [tasksLoaded, setTasksLoaded] = useState(false);
+  const [events, setEvents] = useState([]);
+  const [eventsLoaded, setEventsLoaded] = useState(false);
 
   const loadAttendance = useCallback(
     async (month) => {
@@ -23,16 +25,22 @@ export function usePortal(token) {
     let cancelled = false;
     (async () => {
       try {
-        const [att, t] = await Promise.all([api('/api/attendance', { token }), api('/api/tasks', { token })]);
+        const [att, t, ev] = await Promise.all([
+          api('/api/attendance', { token }),
+          api('/api/tasks', { token }),
+          api('/api/events', { token }),
+        ]);
         if (cancelled) return;
         setToday(att.today);
         setTasks(t.tasks);
+        setEvents(ev.events);
       } catch {
         // Trang vẫn dùng được; lỗi sẽ hiện khi người dùng thao tác
       } finally {
         if (!cancelled) {
           setAttendanceLoaded(true);
           setTasksLoaded(true);
+          setEventsLoaded(true);
         }
       }
     })();
@@ -85,6 +93,22 @@ export function usePortal(token) {
     [token]
   );
 
+  const addEvent = useCallback(
+    async (data) => {
+      const { event } = await api('/api/events', { method: 'POST', body: data, token });
+      setEvents((list) => [...list, event].sort((a, b) => a.time.localeCompare(b.time)));
+    },
+    [token]
+  );
+
+  const removeEvent = useCallback(
+    async (event) => {
+      await api(`/api/events/${event.id}`, { method: 'DELETE', token });
+      setEvents((list) => list.filter((e) => e.id !== event.id));
+    },
+    [token]
+  );
+
   return {
     today,
     attendanceLoaded,
@@ -95,6 +119,10 @@ export function usePortal(token) {
     addTask,
     toggleTask,
     removeTask,
+    events,
+    eventsLoaded,
+    addEvent,
+    removeEvent,
   };
 }
 

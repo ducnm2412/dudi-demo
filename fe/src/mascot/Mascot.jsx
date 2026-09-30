@@ -406,7 +406,12 @@ function Dudi({ mood, shakeKey, pointer, reduced }) {
 
     // Tay
     const sway = reduced ? 0 : Math.sin(t * 1.6) * 0.04;
-    const [rz, rx] = RIGHT_ARM[mood] || [0.18 + sway, 0];
+    let [rz, rx] = RIGHT_ARM[mood] || [0.18 + sway, 0];
+    if (mood === 'wave') {
+      // Giơ tay chào, vẫy qua lại
+      rz = 2.55 + (reduced ? 0 : Math.sin(t * 7) * 0.28);
+      rx = 0.25;
+    }
     damp(armR.current.rotation, 'z', rz, 7);
     damp(armR.current.rotation, 'x', rx, 7);
     damp(armL.current.rotation, 'z', -0.18 - sway, 4);
@@ -437,16 +442,23 @@ function Dudi({ mood, shakeKey, pointer, reduced }) {
 }
 
 // Trên màn rộng, dời nhân vật sang phải để chừa chỗ cho tagline góc trái
-function Rig({ children }) {
+function Rig({ shift, children }) {
   const group = useRef();
   useFrame((state, delta) => {
-    const target = state.size.width >= 700 ? 0.9 : 0;
+    const target = shift === 'full' && state.size.width >= 700 ? 0.9 : 0;
     group.current.position.x = MathUtils.damp(group.current.position.x, target, 4, Math.min(delta, 0.1));
   });
   return <group ref={group}>{children}</group>;
 }
 
-export default function Mascot({ mood = 'idle', shakeKey = 0 }) {
+// Khung hình: toàn thân (trang đăng nhập) hoặc nửa người (thẻ chào trang chủ)
+const CAMERAS = {
+  full: { position: [0, 0.15, 9.2], fov: 32 },
+  bust: { position: [0, 0.62, 6.4], fov: 32 },
+  hero: { position: [0, 1.2, 5.8], fov: 32 },
+};
+
+export default function Mascot({ mood = 'idle', shakeKey = 0, framing = 'full', showGround = true, showSparkles = true, className = 'mascot' }) {
   const wrap = useRef();
   const pointer = useRef({ x: 0, y: 0 });
   const reduced = typeof window !== 'undefined' && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -464,8 +476,8 @@ export default function Mascot({ mood = 'idle', shakeKey = 0 }) {
   }, []);
 
   return (
-    <div ref={wrap} className="mascot" aria-hidden="true">
-      <Canvas dpr={[1, 2]} camera={{ position: [0, 0.15, 9.2], fov: 32 }} gl={{ alpha: true, antialias: true }} fallback={null}>
+    <div ref={wrap} className={className} aria-hidden="true">
+      <Canvas dpr={[1, 2]} camera={CAMERAS[framing]} gl={{ alpha: true, antialias: true }} fallback={null}>
         <ambientLight intensity={0.45} />
         <directionalLight position={[3, 4, 5]} intensity={1.8} />
         <pointLight position={[-3, 1.5, -2]} intensity={16} color={NEON} />
@@ -478,18 +490,22 @@ export default function Mascot({ mood = 'idle', shakeKey = 0 }) {
           <Lightformer form="rect" intensity={2} color={RED} position={[0, -3, -3]} scale={[8, 1, 1]} />
         </Environment>
 
-        <Rig>
+        <Rig shift={framing}>
           <Dudi mood={mood} shakeKey={shakeKey} pointer={pointer} reduced={reduced} />
 
           {/* Vòng sáng dưới chân */}
-          <mesh position={[0, -1.7, 0.07]} rotation={[-Math.PI / 2, 0, 0]}>
-            <torusGeometry args={[0.95, 0.016, 16, 120]} />
-            <meshStandardMaterial color={RED} emissive={RED} emissiveIntensity={2} toneMapped={false} />
-          </mesh>
-          <ContactShadows position={[0, -1.705, 0]} opacity={0.6} scale={5} blur={2.2} far={2} />
+          {showGround && (
+            <>
+              <mesh position={[0, -1.7, 0.07]} rotation={[-Math.PI / 2, 0, 0]}>
+                <torusGeometry args={[0.95, 0.016, 16, 120]} />
+                <meshStandardMaterial color={RED} emissive={RED} emissiveIntensity={2} toneMapped={false} />
+              </mesh>
+              <ContactShadows position={[0, -1.705, 0]} opacity={0.6} scale={5} blur={2.2} far={2} />
+            </>
+          )}
         </Rig>
 
-        <Sparkles count={50} scale={[9, 6, 4]} size={1.6} speed={reduced ? 0 : 0.25} opacity={0.5} color="#A9AED6" />
+        {showSparkles && <Sparkles count={50} scale={[9, 6, 4]} size={1.6} speed={reduced ? 0 : 0.25} opacity={0.5} color="#A9AED6" />}
       </Canvas>
     </div>
   );
