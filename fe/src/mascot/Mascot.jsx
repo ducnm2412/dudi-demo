@@ -3,6 +3,7 @@ import { Canvas, useFrame } from '@react-three/fiber';
 import { ContactShadows, Environment, Lightformer, RoundedBox, Sparkles } from '@react-three/drei';
 import {
   CatmullRomCurve3,
+  CylinderGeometry,
   DoubleSide,
   LatheGeometry,
   MathUtils,
@@ -14,7 +15,7 @@ import {
   Vector2,
   Vector3,
 } from 'three';
-import { circuitTexture, dudiPatchTexture, duPatchTexture, roundedRectMask, ventTexture } from './textures';
+import { circuitTexture, dudiPatchTexture, duPatchTexture, duSquarePatchTexture, labelTexture, roundedRectMask, ventTexture } from './textures';
 
 // Kích thước khung mặt trắng và kính đen [rộng, cao, bo góc]
 const FRAME = [1.46, 1.0, 0.36];
@@ -50,7 +51,7 @@ function conformedPanel(w, h, lift) {
 function tailGeometry(curve) {
   const tubular = 64;
   const radial = 20;
-  const geo = new TubeGeometry(curve, tubular, 0.12, radial, false);
+  const geo = new TubeGeometry(curve, tubular, 0.13, radial, false);
   const p = geo.attributes.position;
   const v = new Vector3();
   for (let i = 0; i <= tubular; i++) {
@@ -65,6 +66,12 @@ function tailGeometry(curve) {
   }
   geo.computeVertexNormals();
   return geo;
+}
+
+// Miếng dán sau lưng: một dải trụ hở bám theo lưng áo (mặt sau, theta quanh π)
+function backPatchGeometry() {
+  const w = 0.4 / 0.482;
+  return new CylinderGeometry(0.482, 0.482, 0.25, 32, 1, true, Math.PI - w / 2, w);
 }
 
 // Dáng thân áo khoác (xoay quanh trục y)
@@ -94,6 +101,7 @@ function useMaterials() {
         side: DoubleSide,
       }),
       gloss: new MeshPhysicalMaterial({ color: RED, roughness: 0.2, clearcoat: 1, clearcoatRoughness: 0.1 }),
+      earInner: new MeshPhysicalMaterial({ color: '#A50E16', roughness: 0.3, clearcoat: 1, clearcoatRoughness: 0.15 }),
       white: new MeshPhysicalMaterial({ color: WHITE, roughness: 0.3, clearcoat: 0.6 }),
       frame: new MeshPhysicalMaterial({ color: WHITE, roughness: 0.3, clearcoat: 0.6, alphaMap: roundedRectMask(...FRAME), alphaTest: 0.5 }),
       visor: new MeshPhysicalMaterial({
@@ -113,12 +121,17 @@ function useMaterials() {
       fabricWhite: new MeshStandardMaterial({ color: '#ECEBE6', roughness: 0.8 }),
       shirt: new MeshStandardMaterial({ color: '#FAFAFA', roughness: 0.9 }),
       pants: new MeshStandardMaterial({ color: '#131318', roughness: 0.85 }),
+      pantsSeam: new MeshStandardMaterial({ color: '#23232b', roughness: 0.9 }),
       metal: new MeshStandardMaterial({ color: '#d9dde3', roughness: 0.2, metalness: 1 }),
       zipper: new MeshStandardMaterial({ color: '#8a8d94', roughness: 0.4, metalness: 0.8 }),
       shoe: new MeshStandardMaterial({ color: '#F7F7F7', roughness: 0.5 }),
+      lace: new MeshStandardMaterial({ color: '#E4E6EA', roughness: 0.7 }),
       sole: new MeshStandardMaterial({ color: '#D5121B', roughness: 0.55 }),
       dudiPatch: new MeshStandardMaterial({ map: dudiPatchTexture(), roughness: 0.7 }),
       duPatch: new MeshStandardMaterial({ map: duPatchTexture(), roughness: 0.6, transparent: true }),
+      duSquare: new MeshStandardMaterial({ map: duSquarePatchTexture(), roughness: 0.7 }),
+      tongueLabel: new MeshStandardMaterial({ map: labelTexture('DUDI', '#ffffff', '#d0121b'), roughness: 0.6 }),
+      heelLabel: new MeshStandardMaterial({ map: labelTexture('DU', '#d0121b', '#ffffff'), roughness: 0.6 }),
     };
   }, []);
 }
@@ -133,20 +146,27 @@ function Head({ m, eyeL, eyeR }) {
   );
   const eyeZ = (x, y) => helmetZ(x, y) + 0.05;
 
-  // Đèn trên đỉnh: đặt trên bề mặt mũ, nghiêng theo pháp tuyến
-  const vent = useMemo(() => {
-    const { cy, b, c } = HELMET;
-    const z = 0.42;
-    const y = cy + b * Math.sqrt(1 - (z / c) ** 2);
-    const n = new Vector3(0, (y - cy) / b ** 2, z / c ** 2).normalize();
-    return { pos: [0, y + n.y * 0.01, z + n.z * 0.01], rotX: Math.atan2(n.z, n.y) };
-  }, []);
+  // Hai đèn trên đỉnh (trước trán và trên gáy): đặt trên bề mặt mũ, nghiêng theo pháp tuyến
+  const vents = useMemo(
+    () =>
+      [0.42, -0.3].map((z) => {
+        const { cy, b, c } = HELMET;
+        const y = cy + b * Math.sqrt(1 - (z / c) ** 2);
+        const n = new Vector3(0, (y - cy) / b ** 2, z / c ** 2).normalize();
+        return { pos: [0, y + n.y * 0.01, z + n.z * 0.01], rotX: Math.atan2(n.z, n.y) };
+      }),
+    []
+  );
 
   return (
     <group>
       {/* Vỏ mũ đỏ, hở phía dưới để lộ phần cằm trắng */}
       <mesh position={[0, HELMET.cy, 0]} scale={[HELMET.a, HELMET.b, HELMET.c]} material={m.helmet}>
         <sphereGeometry args={[1, 96, 64, 0, Math.PI * 2, 0, Math.PI * 0.72]} />
+      </mesh>
+      {/* Phía sau gáy vỏ đỏ trùm xuống sát cổ, chỉ phía trước mới lộ cằm trắng */}
+      <mesh position={[0, HELMET.cy, 0]} scale={[HELMET.a, HELMET.b, HELMET.c]} material={m.gloss}>
+        <sphereGeometry args={[0.998, 64, 12, Math.PI, Math.PI, Math.PI * 0.71, Math.PI * 0.15]} />
       </mesh>
       <mesh position={[0, 0.76, 0]} scale={[0.9, 0.74, 0.82]} material={m.white}>
         <sphereGeometry args={[1, 64, 48]} />
@@ -173,25 +193,33 @@ function Head({ m, eyeL, eyeR }) {
         </mesh>
       ))}
 
-      {/* Tai tròn có vòng neon */}
+      {/* Tai dạng chén: vành bóng, lòng tai lõm sẫm màu, vòng neon quanh lòng tai */}
       {[-1, 1].map((s) => (
         <group key={s} position={[s * 0.74, 1.43, -0.06]} rotation={[0, s * 0.25, -s * 0.5]}>
           <mesh material={m.gloss} scale={[1, 1, 0.62]}>
             <sphereGeometry args={[0.27, 40, 32]} />
           </mesh>
-          <mesh material={m.neon} position={[0, 0, 0.15]}>
-            <torusGeometry args={[0.15, 0.02, 12, 48]} />
+          <mesh material={m.gloss} position={[0, 0, 0.1]}>
+            <torusGeometry args={[0.17, 0.065, 20, 48]} />
+          </mesh>
+          <mesh material={m.earInner} position={[0, 0, 0.1]} scale={[1, 1, 0.35]}>
+            <sphereGeometry args={[0.15, 32, 24]} />
+          </mesh>
+          <mesh material={m.neon} position={[0, 0, 0.155]}>
+            <torusGeometry args={[0.13, 0.009, 10, 48]} />
           </mesh>
         </group>
       ))}
 
       {/* Đèn trên đỉnh */}
-      <group position={vent.pos} rotation={[vent.rotX, 0, 0]}>
-        <RoundedBox args={[0.5, 0.06, 0.3]} radius={0.025} material={m.ventFrame} />
-        <mesh position={[0, 0.032, 0]} rotation={[-Math.PI / 2, 0, 0]} material={m.vent}>
-          <planeGeometry args={[0.42, 0.22]} />
-        </mesh>
-      </group>
+      {vents.map((v) => (
+        <group key={v.pos[2]} position={v.pos} rotation={[v.rotX, 0, 0]}>
+          <RoundedBox args={[0.5, 0.06, 0.3]} radius={0.025} material={m.ventFrame} />
+          <mesh position={[0, 0.032, 0]} rotation={[-Math.PI / 2, 0, 0]} material={m.vent}>
+            <planeGeometry args={[0.42, 0.22]} />
+          </mesh>
+        </group>
+      ))}
     </group>
   );
 }
@@ -209,12 +237,22 @@ function Arm({ side, m, armRef }) {
       <mesh position={[0, -0.52, 0]} rotation={[Math.PI / 2, 0, 0]} material={m.fabricRed}>
         <torusGeometry args={[0.13, 0.045, 12, 32]} />
       </mesh>
-      {/* Găng tay đỏ bóng */}
-      <mesh position={[0, -0.66, 0.01]} scale={[1, 1.1, 0.85]} material={m.gloss}>
-        <sphereGeometry args={[0.14, 32, 24]} />
+      {/* Miếng dán mặt ngoài tay áo: "DU" bên trái màn hình, "DUDI software" bên phải */}
+      <mesh position={[side * 0.158, -0.12, 0]} rotation={[0, side * (Math.PI / 2), 0]} material={side < 0 ? m.duSquare : m.dudiPatch}>
+        <planeGeometry args={side < 0 ? [0.13, 0.13] : [0.17, 0.106]} />
       </mesh>
-      <mesh position={[-side * 0.09, -0.62, 0.07]} material={m.gloss}>
-        <sphereGeometry args={[0.055, 16, 16]} />
+
+      {/* Găng tay đỏ bóng: lòng bàn tay, 3 ngón hơi co và ngón cái */}
+      <mesh position={[0, -0.64, 0.01]} scale={[1, 0.95, 0.8]} material={m.gloss}>
+        <sphereGeometry args={[0.13, 32, 24]} />
+      </mesh>
+      {[-1, 0, 1].map((i) => (
+        <mesh key={i} position={[i * 0.062, -0.77, 0.03]} rotation={[-0.35, 0, -i * 0.12]} material={m.gloss}>
+          <capsuleGeometry args={[0.036, 0.08, 6, 14]} />
+        </mesh>
+      ))}
+      <mesh position={[-side * 0.1, -0.66, 0.07]} rotation={[0.4, 0, side * 0.7]} material={m.gloss}>
+        <capsuleGeometry args={[0.038, 0.07, 6, 14]} />
       </mesh>
     </group>
   );
@@ -234,9 +272,12 @@ function Body({ m, armL, armR, tail }) {
     const zAxis = new Vector3(0, 0, 1);
     return {
       jacket: new LatheGeometry(JACKET_PROFILE, 48),
+      backPatch: backPatchGeometry(),
       tail: tailGeometry(curve),
       ring: ringAt,
       ringQuat: new Quaternion().setFromUnitVectors(zAxis, ringDir),
+      joint: curve.getPointAt(0.3),
+      jointQuat: new Quaternion().setFromUnitVectors(zAxis, curve.getTangentAt(0.3)),
     };
   }, []);
 
@@ -249,10 +290,23 @@ function Body({ m, armL, armR, tail }) {
       {/* Thân áo khoác trắng */}
       <mesh geometry={geo.jacket} scale={[1, 1, JZ]} material={m.fabricWhite} />
 
-      {/* Cổ áo và gấu áo sọc */}
-      <mesh position={[0, 0.39, 0]} rotation={[Math.PI / 2, 0, 0]} scale={[1, 0.8, 1]} material={m.fabricRed}>
-        <torusGeometry args={[0.22, 0.055, 12, 40]} />
-      </mesh>
+      {/* Vai raglan màu đỏ nối liền với tay áo */}
+      {[-1, 1].map((s) => (
+        <mesh key={s} position={[s * 0.31, 0.3, 0]} rotation={[0, 0, s * 0.55]} scale={[0.15, 0.1, 0.26]} material={m.fabricRed}>
+          <sphereGeometry args={[1, 32, 20]} />
+        </mesh>
+      ))}
+
+      {/* Cổ áo bo sọc đỏ trắng và gấu áo sọc */}
+      {[
+        [0.37, m.fabricRed],
+        [0.405, m.fabricWhite],
+        [0.44, m.fabricRed],
+      ].map(([y, mat]) => (
+        <mesh key={y} position={[0, y, 0]} rotation={[Math.PI / 2, 0, 0]} scale={[1, 0.8, 1]} material={mat}>
+          <torusGeometry args={[0.235 - (y - 0.37) * 0.5, 0.024, 10, 40]} />
+        </mesh>
+      ))}
       {[
         [-0.36, m.fabricRed],
         [-0.4, m.fabricWhite],
@@ -265,26 +319,37 @@ function Body({ m, armL, armR, tail }) {
 
       {/* Áo phông, khoá kéo, nẹp đỏ ở chỗ áo mở */}
       <mesh position={[0, -0.02, JZ * 0.47 + 0.003]} material={m.shirt}>
-        <boxGeometry args={[0.15, 0.76, 0.01]} />
+        <boxGeometry args={[0.2, 0.76, 0.01]} />
       </mesh>
       {[-1, 1].map((s) => (
         <group key={s}>
-          <mesh position={[s * 0.085, -0.02, JZ * 0.47 + 0.01]} material={m.zipper}>
+          <mesh position={[s * 0.108, -0.02, JZ * 0.47 + 0.01]} material={m.zipper}>
             <boxGeometry args={[0.014, 0.76, 0.012]} />
           </mesh>
-          <mesh position={[s * 0.11, -0.02, JZ * 0.47 + 0.004]} material={m.fabricRed}>
+          <mesh position={[s * 0.133, -0.02, JZ * 0.47 + 0.004]} material={m.fabricRed}>
             <boxGeometry args={[0.035, 0.76, 0.012]} />
+          </mesh>
+          {/* Túi chéo viền đỏ */}
+          <mesh position={[s * 0.3, -0.18, JZ * Math.sqrt(0.47 ** 2 - 0.3 ** 2) + 0.012]} rotation={[0, s * 0.62, s * 0.32]} material={m.fabricRed}>
+            <boxGeometry args={[0.022, 0.15, 0.012]} />
           </mesh>
         </group>
       ))}
+      {/* Đầu khoá kéo */}
+      <mesh position={[0.108, -0.36, JZ * 0.47 + 0.02]} material={m.zipper}>
+        <boxGeometry args={[0.028, 0.05, 0.01]} />
+      </mesh>
 
       {/* Miếng dán ngực */}
-      <mesh position={[-0.24, 0.12, patchZ]} rotation={[0, -0.39, 0]} material={m.dudiPatch}>
-        <planeGeometry args={[0.24, 0.15]} />
+      <mesh position={[-0.26, 0.12, patchZ - 0.012]} rotation={[0, -0.45, 0]} material={m.dudiPatch}>
+        <planeGeometry args={[0.2, 0.125]} />
       </mesh>
       <mesh position={[0.24, 0.12, patchZ]} rotation={[0, 0.39, 0]} material={m.duPatch}>
         <circleGeometry args={[0.075, 40]} />
       </mesh>
+
+      {/* Miếng dán lớn "DUDI software" sau lưng, uốn theo lưng áo */}
+      <mesh geometry={geo.backPatch} position={[0, 0.06, 0]} scale={[1, 1, JZ]} material={m.dudiPatch} />
 
       {/* Tay */}
       <Arm side={-1} m={m} armRef={armL} />
@@ -296,7 +361,7 @@ function Body({ m, armL, armR, tail }) {
       </mesh>
       {[-1, 1].map((s) => (
         <mesh key={s} position={[s * 0.045, -0.49, JZ * 0.4 + 0.01]} material={m.metal}>
-          <torusGeometry args={[0.045, 0.012, 10, 28]} />
+          <torusGeometry args={[0.05, 0.014, 10, 28]} />
         </mesh>
       ))}
 
@@ -312,22 +377,58 @@ function Body({ m, armL, armR, tail }) {
           <mesh position={[0, -1.02, 0]} rotation={[Math.PI / 2, 0, 0]} material={m.pants}>
             <torusGeometry args={[0.14, 0.04, 10, 28]} />
           </mesh>
-          <mesh position={[s * 0.168, -0.76, 0]} material={m.fabricRed}>
-            <boxGeometry args={[0.012, 0.42, 0.06]} />
+          <mesh position={[s * 0.166, -0.78, 0.03]} material={m.fabricRed}>
+            <boxGeometry args={[0.014, 0.46, 0.075]} />
+          </mesh>
+          {/* Túi hộp bên hông đùi */}
+          <RoundedBox args={[0.05, 0.15, 0.14]} radius={0.015} position={[s * 0.16, -0.8, -0.07]} material={m.pantsSeam} />
+          <mesh position={[s * 0.186, -0.73, -0.07]} material={m.pants}>
+            <boxGeometry args={[0.012, 0.03, 0.15]} />
           </mesh>
 
-          {/* Giày sneaker trắng đế đỏ */}
-          <RoundedBox args={[0.3, 0.19, 0.5]} radius={0.08} position={[0, -1.12, 0.07]} material={m.shoe} />
-          <RoundedBox args={[0.33, 0.07, 0.54]} radius={0.03} position={[0, -1.215, 0.07]} material={m.sole} />
-          <mesh position={[s * 0.152, -1.1, 0.07]} rotation={[0, 0, 0.5]} material={m.sole}>
-            <boxGeometry args={[0.01, 0.05, 0.22]} />
-          </mesh>
+          {/* Giày sneaker trắng: đế 2 lớp, mảng đỏ hai bên, lưỡi gà "DUDI", gót "DU" */}
+          <group position={[0, -1.12, 0.07]}>
+            <RoundedBox args={[0.3, 0.17, 0.5]} radius={0.075} position={[0, 0.01, 0]} material={m.shoe} />
+            <RoundedBox args={[0.29, 0.12, 0.2]} radius={0.05} position={[0, 0.08, -0.13]} material={m.shoe} />
+            <RoundedBox args={[0.33, 0.04, 0.54]} radius={0.018} position={[0, -0.075, 0]} material={m.shoe} />
+            <RoundedBox args={[0.335, 0.035, 0.55]} radius={0.015} position={[0, -0.11, 0]} material={m.sole} />
+            {[-1, 1].map((k) => (
+              <group key={k}>
+                <mesh position={[k * 0.151, -0.01, 0.06]} rotation={[0.45, 0, 0]} material={m.sole}>
+                  <boxGeometry args={[0.012, 0.05, 0.2]} />
+                </mesh>
+                <mesh position={[k * 0.151, 0.02, -0.14]} material={m.sole}>
+                  <boxGeometry args={[0.012, 0.08, 0.1]} />
+                </mesh>
+              </group>
+            ))}
+            <RoundedBox args={[0.2, 0.05, 0.12]} radius={0.02} position={[0, 0.02, 0.2]} material={m.sole} />
+            {/* Lưỡi gà + dây giày */}
+            <group position={[0, 0.12, 0.04]} rotation={[-0.35, 0, 0]}>
+              <RoundedBox args={[0.14, 0.02, 0.2]} radius={0.008} material={m.shoe} />
+              <mesh position={[0, 0.012, -0.06]} rotation={[-Math.PI / 2, 0, 0]} material={m.tongueLabel}>
+                <planeGeometry args={[0.1, 0.06]} />
+              </mesh>
+              {[0.01, 0.05, 0.09].map((z) => (
+                <mesh key={z} position={[0, 0.016, z]} material={m.lace}>
+                  <boxGeometry args={[0.16, 0.012, 0.018]} />
+                </mesh>
+              ))}
+            </group>
+            <mesh position={[0, 0.1, -0.232]} rotation={[0, Math.PI, 0]} material={m.heelLabel}>
+              <planeGeometry args={[0.1, 0.06]} />
+            </mesh>
+          </group>
         </group>
       ))}
 
       {/* Đuôi đỏ bóng + khoen bạc */}
       <group ref={tail} position={[0, -0.4, -0.28]}>
         <mesh geometry={geo.tail} material={m.gloss} />
+        {/* Khớp nối đuôi */}
+        <mesh position={geo.joint} quaternion={geo.jointQuat} material={m.gloss}>
+          <torusGeometry args={[0.13, 0.022, 12, 36]} />
+        </mesh>
         <mesh position={geo.ring} quaternion={geo.ringQuat} material={m.metal}>
           <torusGeometry args={[0.1, 0.02, 12, 36]} />
         </mesh>
@@ -381,8 +482,8 @@ function Dudi({ mood, shakeKey, pointer, reduced }) {
     if (POSES[mood]) {
       [yaw, pitch] = POSES[mood];
     } else if (mood === 'watch') {
-      // Nhìn về phía form: bên phải trên desktop, phía dưới trên mobile
-      const formBelow = state.size.width < 520;
+      // Nhìn về phía form: bên phải trên desktop, phía dưới khi form xếp dưới khung (xem .auth trong index.css)
+      const formBelow = window.innerWidth <= 900;
       yaw = formBelow ? 0 : 0.6;
       pitch = formBelow ? 0.4 : 0.12;
     } else {
@@ -441,16 +542,6 @@ function Dudi({ mood, shakeKey, pointer, reduced }) {
   );
 }
 
-// Trên màn rộng, dời nhân vật sang phải để chừa chỗ cho tagline góc trái
-function Rig({ shift, children }) {
-  const group = useRef();
-  useFrame((state, delta) => {
-    const target = shift === 'full' && state.size.width >= 700 ? 0.9 : 0;
-    group.current.position.x = MathUtils.damp(group.current.position.x, target, 4, Math.min(delta, 0.1));
-  });
-  return <group ref={group}>{children}</group>;
-}
-
 // Khung hình: toàn thân (trang đăng nhập) hoặc nửa người (thẻ chào trang chủ)
 const CAMERAS = {
   full: { position: [0, 0.15, 9.2], fov: 32 },
@@ -490,20 +581,18 @@ export default function Mascot({ mood = 'idle', shakeKey = 0, framing = 'full', 
           <Lightformer form="rect" intensity={2} color={RED} position={[0, -3, -3]} scale={[8, 1, 1]} />
         </Environment>
 
-        <Rig shift={framing}>
-          <Dudi mood={mood} shakeKey={shakeKey} pointer={pointer} reduced={reduced} />
+        <Dudi mood={mood} shakeKey={shakeKey} pointer={pointer} reduced={reduced} />
 
-          {/* Vòng sáng dưới chân */}
-          {showGround && (
-            <>
-              <mesh position={[0, -1.7, 0.07]} rotation={[-Math.PI / 2, 0, 0]}>
-                <torusGeometry args={[0.95, 0.016, 16, 120]} />
-                <meshStandardMaterial color={RED} emissive={RED} emissiveIntensity={2} toneMapped={false} />
-              </mesh>
-              <ContactShadows position={[0, -1.705, 0]} opacity={0.6} scale={5} blur={2.2} far={2} />
-            </>
-          )}
-        </Rig>
+        {/* Vòng sáng dưới chân */}
+        {showGround && (
+          <>
+            <mesh position={[0, -1.7, 0.07]} rotation={[-Math.PI / 2, 0, 0]}>
+              <torusGeometry args={[0.95, 0.016, 16, 120]} />
+              <meshStandardMaterial color={RED} emissive={RED} emissiveIntensity={2} toneMapped={false} />
+            </mesh>
+            <ContactShadows position={[0, -1.705, 0]} opacity={0.6} scale={5} blur={2.2} far={2} />
+          </>
+        )}
 
         {showSparkles && <Sparkles count={50} scale={[9, 6, 4]} size={1.6} speed={reduced ? 0 : 0.25} opacity={0.6} color="#FF9B45" />}
       </Canvas>

@@ -1,50 +1,57 @@
 import bcrypt from 'bcryptjs';
 import { connectDB } from '@/lib/db';
 import { json, preflight } from '@/lib/http';
-import { signToken } from '@/lib/auth';
-import User from '@/models/User';
-
-const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-const PHONE_RE = /^(0|\+84)(3|5|7|8|9)\d{8}$/;
+import { OTP_MAX_SENDS, OTP_RESEND_MS, PENDING_TTL_MS } from '@/lib/otp';
+import { validateSignup } from '@/lib/registration';
+import { issueCode } from '@/lib/signup';
+import PendingSignup from '@/models/PendingSignup';
 
 export function OPTIONS() {
   return preflight();
 }
 
+// OTP tự gửi (console/Twilio), dùng khi FE không cấu hình Firebase.
+// Bước 1: kiểm tra thông tin, lưu tạm và gửi OTP tới SĐT. Chưa tạo tài khoản.
 export async function POST(req) {
   const body = await req.json().catch(() => ({}));
-  const email = String(body.email || '').trim().toLowerCase();
-  const phone = String(body.phone || '').replace(/\s/g, '');
-  const password = String(body.password || '');
-
-  if (!EMAIL_RE.test(email)) {
-    return json({ message: 'Email không hợp lệ' }, 400);
-  }
-  if (!PHONE_RE.test(phone)) {
-    return json({ message: 'Số điện thoại không hợp lệ' }, 400);
-  }
-  if (password.length < 6) {
-    return json({ message: 'Mật khẩu tối thiểu 6 ký tự' }, 400);
-  }
-
   await connectDB();
+  const result = await validateSignup(body);
+  if (result.error) return json({ message: result.error }, result.status);
+  const { username, phone, password } = result;
 
-  const existed = await User.findOne({ $or: [{ email }, { phone }] });
-  if (existed) {
-    if (existed.email === email) {
-      const hint = existed.provider === 'google' ? ', hãy đăng nhập bằng Google' : '';
-      return json({ message: `Email đã được sử dụng${hint}` }, 409);
-    }
-    return json({ message: 'Số điện thoại đã được sử dụng' }, 409);
+  const now = Date.now();
+  let pending = await PendingSignup.findOne({ phone });
+  if (pending && now - pending.lastSentAt.getTime() < OTP_RESEND_MS) {
+    const wait = Math.ceil((OTP_RESEND_MS - (now - pending.lastSentAt.getTime())) / 1000);
+    return json({ message: `Vui lòng chờ ${wait} giây trước khi gửi lại mã`, retryAfter: wait }, 429);
   }
 
-  const user = await User.create({
-    email,
-    phone,
-    passwordHash: await bcrypt.hash(password, 10),
-    name: email.split('@')[0],
-    provider: 'local',
-  });
+  if (pending && pending.sends >= OTP_MAX_SENDS) {
+    return json({ message: 'Bạn đã yêu cầu gửi mã quá nhiều lần, vui lòng thử lại sau 30 phút' }, 429);
+  }
 
-  return json({ token: signToken(user), user: user.toPublic() }, 201);
+  const passwordHash = await bcrypt.hash(password, 10);
+  if (pending) {
+    // Đăng ký lại cùng SĐT: cập nhật thông tin mới, đếm như một lần gửi lại
+    pending.username = username;
+    pending.passwordHash = passwordHash;
+    pending.sends += 1;
+  } else {
+    pending = new PendingSignup({
+      phone,
+      username,
+      passwordHash,
+      codeHash: '-',
+      expiresAt: new Date(now),
+      lastSentAt: new Date(now),
+      purgeAt: new Date(now + PENDING_TTL_MS),
+    });
+  }
+
+  try {
+    return json(await issueCode(pending), 202);
+  } catch (err) {
+    console.error(err);
+    return json({ message: 'Không gửi được mã xác minh, vui lòng thử lại sau' }, 502);
+  }
 }

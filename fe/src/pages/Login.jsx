@@ -1,8 +1,9 @@
-import { useState } from 'react';
+import { useCallback, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { api } from '../api';
 import { useAuth } from '../AuthContext';
 import AuthLayout, { useMascotMood } from '../AuthLayout';
+import FacebookButton from '../FacebookButton';
 import GoogleButton from '../GoogleButton';
 import PasswordInput from '../PasswordInput';
 
@@ -10,17 +11,20 @@ export default function Login() {
   const navigate = useNavigate();
   const { saveSession } = useAuth();
   const { mood, shakeKey, bind, onVisibleChange, shake } = useMascotMood();
-  const [form, setForm] = useState({ email: '', password: '' });
+  const [form, setForm] = useState({ username: '', password: '' });
   const [remember, setRemember] = useState(true);
   const [error, setError] = useState('');
   const [submitting, setSubmitting] = useState(false);
 
   const onChange = (e) => setForm({ ...form, [e.target.name]: e.target.value });
 
-  const fail = (message) => {
-    setError(message);
-    shake();
-  };
+  const fail = useCallback(
+    (message) => {
+      setError(message);
+      shake();
+    },
+    [shake]
+  );
 
   const finish = (data) => {
     saveSession(data, remember);
@@ -47,14 +51,17 @@ export default function Login() {
         Chưa có tài khoản? <Link to="/register">Tạo tài khoản</Link>
       </p>
 
-      <GoogleButton text="signin_with" remember={remember} onSuccess={finish} onError={fail} />
+      <div className="social">
+        <GoogleButton text="signin_with" remember={remember} onSuccess={finish} onError={fail} />
+        <FacebookButton text="signin" remember={remember} onSuccess={finish} onError={fail} />
+      </div>
 
-      <div className="divider"><span>hoặc dùng email</span></div>
+      <div className="divider"><span>hoặc dùng tài khoản</span></div>
 
       <form onSubmit={onSubmit}>
         <label className="field">
-          <span>Email</span>
-          <input name="email" type="email" value={form.email} onChange={onChange} autoComplete="email" placeholder="nguyenvana@gmail.com" required {...bind('email')} />
+          <span>Tên đăng nhập</span>
+          <input name="username" value={form.username} onChange={onChange} autoComplete="username" autoCapitalize="none" spellCheck="false" placeholder="nguyenvana" required {...bind('username')} />
         </label>
         <label className="field">
           <span>Mật khẩu</span>

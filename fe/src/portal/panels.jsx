@@ -6,13 +6,21 @@ export function ProfilePanel({ user }) {
   return (
     <dl className="facts">
       <div><dt>Họ tên</dt><dd>{user.name || 'Chưa đặt'}</dd></div>
-      <div><dt>Email</dt><dd>{user.email}</dd></div>
-      <div><dt>Số điện thoại</dt><dd>{user.phone || 'Chưa thêm'}</dd></div>
+      {user.username && <div><dt>Tên đăng nhập</dt><dd>{user.username}</dd></div>}
+      <div><dt>Email</dt><dd>{user.email || 'Chưa có'}</dd></div>
+      <div>
+        <dt>Số điện thoại</dt>
+        <dd>
+          {user.phone || 'Chưa thêm'}
+          {user.phone && user.phoneVerified && ' (đã xác minh)'}
+        </dd>
+      </div>
       <div>
         <dt>Cách đăng nhập</dt>
         <dd>
-          {user.provider === 'google' ? 'Google' : 'Email và mật khẩu'}
-          {user.provider === 'local' && user.googleLinked && ', đã liên kết Google'}
+          {{ google: 'Google', facebook: 'Facebook' }[user.provider] || 'Tên đăng nhập và mật khẩu'}
+          {user.provider !== 'google' && user.googleLinked && ', đã liên kết Google'}
+          {user.provider !== 'facebook' && user.facebookLinked && ', đã liên kết Facebook'}
         </dd>
       </div>
       <div>

@@ -19,6 +19,7 @@ export async function api(path, { method = 'GET', body, token } = {}) {
   if (!res.ok) {
     const err = new Error(data.message || 'Có lỗi xảy ra');
     err.status = res.status;
+    err.data = data;
     throw err;
   }
   return data;

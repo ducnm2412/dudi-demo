@@ -4,7 +4,7 @@ import { useEffect, useRef } from 'react';
 const TRACES = [
   'M0 170 H170 L230 230 H400',
   'M0 390 H80 L120 430 H210',
-  'M0 590 H130 L190 530 H320',
+  'M0 520 H110 L160 470 H300', // giữ trên vùng tagline góc dưới trái
   'M1000 130 H830 L770 190 H650',
   'M1000 410 H920 L880 370 H800',
   'M1000 640 H870 L810 580 H720',

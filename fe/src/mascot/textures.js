@@ -34,9 +34,17 @@ export function circuitTexture() {
   ctx.fillRect(0, 0, W, H);
 
   const rand = mulberry32(11);
+  // Vùng không vẽ: khung mặt, hai đèn trên đỉnh, sát đỉnh/đáy, và dải giữa lưng (vẽ tay bên dưới)
   const blocked = (u, v) => {
     const uu = ((u % 1) + 1) % 1;
-    return (uu > 0.1 && uu < 0.4 && v > 0.36 && v < 1) || (uu > 0.16 && uu < 0.34 && v < 0.25) || v > 0.9 || v < 0.05;
+    return (
+      (uu > 0.1 && uu < 0.4 && v > 0.36) ||
+      (uu > 0.16 && uu < 0.34 && v < 0.25) ||
+      (uu > 0.63 && uu < 0.87 && v < 0.22) ||
+      (uu > 0.66 && uu < 0.84) ||
+      v > 0.9 ||
+      v < 0.05
+    );
   };
 
   ctx.strokeStyle = '#fff';
@@ -46,7 +54,7 @@ export function circuitTexture() {
   ctx.shadowColor = '#fff';
   ctx.shadowBlur = 14;
 
-  const line = (pts, width = 9) => {
+  const line = (pts, width = 8) => {
     ctx.lineWidth = width;
     ctx.beginPath();
     pts.forEach(([pu, pv], i) => (i ? ctx.lineTo(pu * W, pv * H) : ctx.moveTo(pu * W, pv * H)));
@@ -58,8 +66,8 @@ export function circuitTexture() {
     ctx.fill();
   };
 
-  // Các đường viền chạy vòng quanh khung mặt (hai bên đối xứng qua u = 0.25)
   for (const side of [-1, 1]) {
+    // Mặt trước: các đường viền chạy vòng quanh khung mặt (đối xứng qua u = 0.25)
     const u = (d) => 0.25 + side * d;
     line([[u(0.07), 0.2], [u(0.12), 0.2], [u(0.16), 0.3], [u(0.16), 0.72], [u(0.13), 0.84]]);
     line([[u(0.08), 0.25], [u(0.11), 0.25], [u(0.14), 0.33], [u(0.14), 0.62]]);
@@ -68,9 +76,22 @@ export function circuitTexture() {
     dot(u(0.24), 0.5);
     line([[u(0.19), 0.36], [u(0.21), 0.4], [u(0.21), 0.78]], 7);
     dot(u(0.21), 0.78, 8);
+
+    // Sau gáy: hai đường dọc từ đèn phía sau chạy xuống cổ, có nhánh rẽ ngắn
+    const b = (d) => 0.75 + side * d;
+    line([[b(0.035), 0.2], [b(0.035), 0.34], [b(0.055), 0.4], [b(0.055), 0.86]]);
+    line([[b(0.055), 0.52], [b(0.075), 0.56], [b(0.075), 0.62]], 6);
+    dot(b(0.075), 0.62, 8);
+    line([[b(0.055), 0.7], [b(0.03), 0.74], [b(0.03), 0.8]], 6);
+    dot(b(0.03), 0.8, 8);
+    line([[b(0.12), 0.1], [b(0.12), 0.3], [b(0.1), 0.36], [b(0.1), 0.66], [b(0.12), 0.72], [b(0.12), 0.88]]);
+    line([[b(0.1), 0.46], [b(0.078), 0.49]], 6);
+    dot(b(0.078), 0.49, 8);
   }
 
+  // Đường mạch ngẫu nhiên ở hai bên mũ, chủ yếu chạy dọc
   const dirs = [
+    [0, 1],
     [0, 1],
     [1, 1],
     [-1, 1],
@@ -79,9 +100,9 @@ export function circuitTexture() {
   ];
 
   let drawn = 0;
-  for (let attempt = 0; attempt < 400 && drawn < 40; attempt++) {
+  for (let attempt = 0; attempt < 400 && drawn < 26; attempt++) {
     let u = rand();
-    let v = 0.06 + rand() * 0.7;
+    let v = 0.06 + rand() * 0.6;
     if (blocked(u, v)) continue;
 
     const pts = [[u, v]];
@@ -112,7 +133,7 @@ export function circuitTexture() {
   }
 
   // Cụm vạch như chip ở hai bên mũ
-  for (const u0 of [0.02, 0.47, 0.53, 0.7]) {
+  for (const u0 of [0.015, 0.465, 0.585, 0.89]) {
     for (let i = 0; i < 7; i++) {
       const w = 18 + (i % 3) * 14;
       ctx.fillRect(u0 * W, (0.42 + i * 0.035) * H, w, 9);
@@ -188,5 +209,43 @@ export function duPatchTexture() {
   ctx.textBaseline = 'middle';
   ctx.font = 'bold 110px Arial, sans-serif';
   ctx.fillText('DU', 128, 136);
+  return toTexture(c);
+}
+
+// Miếng dán vuông "DU" trên tay áo: nền đỏ, viền xanh navy
+export function duSquarePatchTexture() {
+  const [c, ctx] = canvas(256, 256);
+  ctx.fillStyle = '#1b2a55';
+  ctx.beginPath();
+  ctx.roundRect(0, 0, 256, 256, 28);
+  ctx.fill();
+  ctx.fillStyle = '#d0121b';
+  ctx.beginPath();
+  ctx.roundRect(18, 18, 220, 220, 18);
+  ctx.fill();
+  ctx.strokeStyle = '#fff';
+  ctx.lineWidth = 6;
+  ctx.strokeRect(34, 34, 188, 188);
+  ctx.fillStyle = '#fff';
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.font = 'bold 120px Arial, sans-serif';
+  ctx.fillText('DU', 128, 136);
+  return toTexture(c);
+}
+
+// Nhãn chữ nhỏ trên giày: lưỡi gà "DUDI" (nền trắng chữ đỏ) và gót "DU" (nền đỏ chữ trắng)
+export function labelTexture(text, bg, fg) {
+  const [c, ctx] = canvas(256, 160);
+  ctx.fillStyle = bg;
+  ctx.fillRect(0, 0, 256, 160);
+  ctx.strokeStyle = fg;
+  ctx.lineWidth = 8;
+  ctx.strokeRect(10, 10, 236, 140);
+  ctx.fillStyle = fg;
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.font = `bold ${text.length > 2 ? 88 : 110}px Arial, sans-serif`;
+  ctx.fillText(text, 128, 86);
   return toTexture(c);
 }

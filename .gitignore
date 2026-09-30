@@ -6,3 +6,8 @@ dist
 *.log
 .DS_Store
 .vercel
+
+# Khoá bí mật của Google/Firebase, không bao giờ commit
+*firebase-adminsdk*.json
+*service-account*.json
+*serviceAccount*.json

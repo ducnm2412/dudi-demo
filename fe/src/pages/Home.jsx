@@ -24,7 +24,7 @@ export default function Home() {
 
   const closePanel = useCallback(() => setPanel(null), []);
   const closeSide = useCallback(() => setSideOpen(false), []);
-  const displayName = user.name || user.email.split('@')[0];
+  const displayName = user.name || user.username || (user.email || '').split('@')[0] || 'bạn';
   const { today, tasks, events } = portal;
   const pending = tasks.filter((t) => !t.done).length;
 

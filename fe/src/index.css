@@ -11,8 +11,8 @@
   --line: #f4e3d6;
   --error: #d43a2f;
 
-  --display: 'Bricolage Grotesque', 'Be Vietnam Pro', system-ui, sans-serif;
-  --text: 'Be Vietnam Pro', system-ui, 'Segoe UI', sans-serif;
+  --display: "Bricolage Grotesque", "Be Vietnam Pro", system-ui, sans-serif;
+  --text: "Be Vietnam Pro", system-ui, "Segoe UI", sans-serif;
 
   color-scheme: light;
   font: 400 16px/1.55 var(--text);
@@ -76,8 +76,16 @@ a {
   overflow: hidden;
   min-height: 100svh;
   background:
-    radial-gradient(55% 60% at 50% 62%, rgba(255, 170, 110, 0.45), transparent 70%),
-    radial-gradient(60% 50% at 12% 6%, rgba(255, 255, 255, 0.7), transparent 70%),
+    radial-gradient(
+      55% 60% at 50% 62%,
+      rgba(255, 170, 110, 0.45),
+      transparent 70%
+    ),
+    radial-gradient(
+      60% 50% at 12% 6%,
+      rgba(255, 255, 255, 0.7),
+      transparent 70%
+    ),
     linear-gradient(135deg, #fff4ea, #ffe2c9);
 }
 
@@ -92,6 +100,22 @@ a {
 .mascot {
   position: absolute;
   inset: 0;
+}
+
+/* Khung đủ rộng: robot thu nhỏ ở góc dưới phải, nhường giữa khung cho lời kêu gọi */
+@container stage (min-width: 700px) {
+  /* Container query không áp lên chính .stage nên đặt biến cho các con */
+  .stage > * {
+    --mascot-w: clamp(240px, 28cqw, 400px);
+    --mascot-h: calc(var(--mascot-w) * 1.25);
+  }
+
+  .stage .mascot {
+    inset: auto 8px 0 auto;
+    width: var(--mascot-w);
+    height: var(--mascot-h);
+    z-index: 3;
+  }
 }
 
 /* ---------- Hiệu ứng nền khung trái ---------- */
@@ -236,7 +260,8 @@ a {
 
 @media (prefers-reduced-motion: reduce) {
   .blob,
-  .doodle {
+  .doodle,
+  .pulses path {
     animation: none;
   }
 
@@ -262,7 +287,9 @@ a {
   opacity: 0;
   transform: translateY(6px) scale(0.96);
   transform-origin: bottom left;
-  transition: opacity 0.2s, transform 0.2s;
+  transition:
+    opacity 0.2s,
+    transform 0.2s;
   pointer-events: none;
 }
 
@@ -271,49 +298,186 @@ a {
   transform: none;
 }
 
+/* ---------- Lời kêu gọi giữa khung ---------- */
+
 .stage-copy {
   position: absolute;
   z-index: 2;
-  left: 40px;
-  bottom: 40px;
-  max-width: 30ch;
+  top: 50%;
+  left: 50%;
+  width: min(92%, 760px);
+  translate: -50% -54%;
   display: none;
+  text-align: center;
 }
 
-/* Khung đủ rộng: robot dời sang phải (xem Rig trong Mascot.jsx), tagline hiện ở góc trái */
+/* Khung đủ rộng: lời kêu gọi ở giữa, robot ở góc dưới phải (bong bóng thoại bám theo robot) */
 @container stage (min-width: 700px) {
   .stage-copy {
     display: block;
   }
 
   .bubble {
-    left: calc(50% + 230px);
+    top: auto;
+    left: auto;
+    right: calc(var(--mascot-w) * 0.2 + 8px);
+    bottom: calc(var(--mascot-h) * 0.9);
+    border-radius: 14px 14px 4px 14px;
+    transform-origin: bottom right;
+  }
+}
+
+.stage-kicker {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 14px 6px 10px;
+  border: 1px solid rgba(232, 96, 10, 0.22);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.65);
+  backdrop-filter: blur(8px);
+  color: var(--orange-ink);
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  box-shadow: 0 6px 18px rgba(214, 120, 50, 0.12);
+}
+
+.stage-kicker-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #ed1c24;
+  box-shadow: 0 0 0 0 rgba(237, 28, 36, 0.5);
+  animation: kicker-ping 2s ease-out infinite;
+}
+
+@keyframes kicker-ping {
+  to {
+    box-shadow: 0 0 0 10px rgba(237, 28, 36, 0);
   }
 }
 
 .stage-hello {
-  margin-bottom: 6px;
-  font-family: 'Playwrite VN', cursive;
+  margin: 22px 0 4px;
+  font-family: "Playwrite VN", cursive;
   font-weight: 300;
-  font-size: 24px;
+  font-size: clamp(20px, 2.2cqw, 28px);
   color: var(--orange-ink);
   transform: rotate(-4deg);
-  transform-origin: left;
 }
 
 .stage-title {
-  font-weight: 700;
-  font-variation-settings: 'wdth' 85;
-  font-size: clamp(26px, 2.6vw, 40px);
-  line-height: 1.08;
-  letter-spacing: -0.015em;
+  font-family: var(--display);
+  font-weight: 800;
+  font-variation-settings: "wdth" 82;
+  font-size: clamp(38px, 6cqw, 84px);
+  line-height: 1.02;
+  letter-spacing: -0.035em;
   text-wrap: balance;
 }
 
+/* Cụm từ đổi luân phiên: dòng riêng để khi đổi chữ không làm nhảy dòng trên */
+.stage-rotator {
+  display: block;
+  padding-bottom: 0.12em;
+}
+
+.stage-word {
+  display: inline-block;
+  background: linear-gradient(100deg, #ed1c24 0%, var(--orange) 45%, #ffb347 60%, #ed1c24 100%);
+  background-size: 220% 100%;
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  animation:
+    word-in 0.6s cubic-bezier(0.2, 0.8, 0.2, 1) both,
+    word-shine 3.2s linear infinite;
+}
+
+@keyframes word-in {
+  from {
+    opacity: 0;
+    filter: blur(8px);
+    transform: translateY(0.35em) scale(0.96);
+  }
+}
+
+@keyframes word-shine {
+  to {
+    background-position: -220% 0;
+  }
+}
+
 .stage-sub {
-  margin-top: 12px;
+  max-width: 46ch;
+  margin: 18px auto 0;
   color: var(--muted);
-  font-size: 15px;
+  font-size: clamp(15px, 1.4cqw, 18px);
+  text-wrap: balance;
+}
+
+.stage-chips {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 10px;
+  margin: 26px 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.stage-chips li {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 16px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.8);
+  color: var(--ink);
+  font-size: 14px;
+  font-weight: 600;
+  box-shadow: 0 8px 20px rgba(214, 120, 50, 0.1);
+}
+
+.stage-chips li::before {
+  content: "";
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--orange);
+}
+
+/* Khung vừa: chữ lên góc trên trái, chéo với robot góc dưới phải để không chồng nhau */
+@container stage (min-width: 700px) and (max-width: 999px) {
+  .stage-copy {
+    top: 120px;
+    left: 40px;
+    width: min(100% - 80px, 560px);
+    translate: none;
+    text-align: left;
+  }
+
+  .stage-hello {
+    transform-origin: left;
+  }
+
+  .stage-sub {
+    margin-left: 0;
+  }
+
+  .stage-chips {
+    justify-content: flex-start;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .stage-kicker-dot,
+  .stage-word {
+    animation: none;
+  }
 }
 
 .panel {
@@ -332,9 +496,8 @@ a {
 
 .panel h1 {
   margin: 0;
-  font-family: var(--display);
   font-weight: 700;
-  font-variation-settings: 'wdth' 90;
+  font-variation-settings: "wdth" 90;
   font-size: 40px;
   line-height: 1.1;
   letter-spacing: -0.02em;
@@ -382,7 +545,10 @@ input {
   border-radius: 12px;
   background: #fffaf6;
   color: var(--ink);
-  transition: border-color 0.15s, box-shadow 0.15s, background 0.15s;
+  transition:
+    border-color 0.15s,
+    box-shadow 0.15s,
+    background 0.15s;
 }
 
 input::placeholder {
@@ -431,7 +597,7 @@ input:focus {
 }
 
 .toggle-password:hover,
-.toggle-password[aria-pressed='true'] {
+.toggle-password[aria-pressed="true"] {
   color: var(--orange);
 }
 
@@ -467,7 +633,9 @@ button.primary {
   color: #fff;
   font-weight: 600;
   box-shadow: 0 8px 18px rgba(255, 122, 26, 0.3);
-  transition: filter 0.15s, transform 0.15s;
+  transition:
+    filter 0.15s,
+    transform 0.15s;
 }
 
 button.primary:hover:not(:disabled) {
@@ -509,6 +677,93 @@ button.ghost:hover {
   color-scheme: normal;
 }
 
+/* Nhóm nút đăng nhập mạng xã hội */
+.social {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+}
+
+/* Nút Facebook: cùng kích thước và kiểu viền với nút Google "outline" */
+.social-btn {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 300px;
+  max-width: 100%;
+  height: 40px;
+  padding: 0 40px;
+  border: 1px solid #dadce0;
+  border-radius: 4px;
+  background: #fff;
+  color: #3c4043;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s;
+}
+
+.social-btn svg {
+  position: absolute;
+  left: 11px;
+}
+
+.social-btn:hover:not(:disabled) {
+  border-color: #d2e3fc;
+  background: #f7faff;
+}
+
+.social-btn:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+
+/* Nút dạng liên kết (Đổi số, Gửi lại mã) */
+.text-btn {
+  display: inline;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--orange-ink);
+  font: inherit;
+  font-weight: 500;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  cursor: pointer;
+}
+
+.text-btn:disabled {
+  color: var(--muted);
+  text-decoration: none;
+  cursor: default;
+}
+
+.text-btn.resend {
+  align-self: center;
+  margin-top: 4px;
+  font-size: 14px;
+}
+
+.dev-note {
+  margin-bottom: 14px;
+  padding: 10px 12px;
+  border: 1px dashed var(--orange);
+  border-radius: 10px;
+  background: var(--soft);
+  font-size: 14px;
+}
+
+.otp-input {
+  font-size: 26px;
+  font-weight: 600;
+  letter-spacing: 0.5em;
+  text-align: center;
+  text-indent: 0.5em;
+  font-variant-numeric: tabular-nums;
+}
+
 .divider {
   display: flex;
   align-items: center;
@@ -520,7 +775,7 @@ button.ghost:hover {
 
 .divider::before,
 .divider::after {
-  content: '';
+  content: "";
   flex: 1;
   height: 1px;
   background: var(--line);
@@ -554,9 +809,24 @@ button.ghost:hover {
     left: 20px;
   }
 
+  /* Khung thấp: bỏ lời kêu gọi, robot quay lại giữa khung */
+  .stage-copy {
+    display: none;
+  }
+
+  .stage .mascot {
+    inset: 0;
+    width: auto;
+    height: auto;
+  }
+
   .bubble {
     top: 12%;
+    right: auto;
+    bottom: auto;
     left: calc(50% + 70px);
+    border-radius: 14px 14px 14px 4px;
+    transform-origin: bottom left;
   }
 
   .panel {
@@ -569,7 +839,6 @@ button.ghost:hover {
   .panel h1 {
     font-size: 32px;
   }
-
 }
 
 @media (max-width: 420px) {
