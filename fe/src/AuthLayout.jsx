@@ -55,6 +55,7 @@ export default function AuthLayout({ mood, shakeKey, children }) {
         </p>
 
         <div className="stage-copy">
+          <p className="stage-hello" aria-hidden="true">Xin chào!</p>
           <p className="stage-title">Giải pháp phần mềm thông minh</p>
           <p className="stage-sub">Một tài khoản để theo dõi mọi dự án bạn làm cùng DUDI Software.</p>
         </div>

@@ -13,7 +13,7 @@ export default function GoogleButton({ text, remember = true, onSuccess, onError
     <div className="google-btn">
       <GoogleLogin
         text={text}
-        theme="filled_black"
+        theme="outline"
         shape="rectangular"
         width="300"
         locale="vi"

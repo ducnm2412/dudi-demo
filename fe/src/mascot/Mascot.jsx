@@ -505,7 +505,7 @@ export default function Mascot({ mood = 'idle', shakeKey = 0, framing = 'full', 
           )}
         </Rig>
 
-        {showSparkles && <Sparkles count={50} scale={[9, 6, 4]} size={1.6} speed={reduced ? 0 : 0.25} opacity={0.5} color="#A9AED6" />}
+        {showSparkles && <Sparkles count={50} scale={[9, 6, 4]} size={1.6} speed={reduced ? 0 : 0.25} opacity={0.6} color="#FF9B45" />}
       </Canvas>
     </div>
   );

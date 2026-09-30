@@ -1197,7 +1197,7 @@
   }
 }
 
-/* Ô nhập liệu trong dashboard: ghi đè tông tối của trang đăng nhập */
+/* Ô nhập liệu trong dashboard: nền trắng thay vì nền kem của form đăng nhập */
 .dash input,
 .dash select {
   height: 46px;
