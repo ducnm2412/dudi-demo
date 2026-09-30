@@ -94,6 +94,157 @@ a {
   inset: 0;
 }
 
+/* ---------- Hiệu ứng nền khung trái ---------- */
+
+.backdrop {
+  --mx: 0;
+  --my: 0;
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+/* Khối màu mờ trôi chậm, dịch nhẹ theo chuột */
+.blob {
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(60px);
+  opacity: 0.55;
+  translate: calc(var(--mx) * var(--depth)) calc(var(--my) * var(--depth));
+  transition: translate 0.6s ease-out;
+}
+
+.blob-1 {
+  --depth: -40px;
+  top: -12%;
+  left: -8%;
+  width: 46%;
+  aspect-ratio: 1;
+  background: #ffc59a;
+  animation: blob-drift 22s ease-in-out infinite alternate;
+}
+
+.blob-2 {
+  --depth: 30px;
+  right: -10%;
+  bottom: -18%;
+  width: 52%;
+  aspect-ratio: 1;
+  background: #ffae8a;
+  animation: blob-drift 26s ease-in-out -8s infinite alternate-reverse;
+}
+
+.blob-3 {
+  --depth: -24px;
+  top: 30%;
+  left: 38%;
+  width: 30%;
+  aspect-ratio: 1;
+  background: #ffe0a8;
+  opacity: 0.45;
+  animation: blob-drift 18s ease-in-out -4s infinite alternate;
+}
+
+@keyframes blob-drift {
+  0% {
+    transform: translate(0, 0) scale(1);
+  }
+  50% {
+    transform: translate(6%, 8%) scale(1.08);
+  }
+  100% {
+    transform: translate(-5%, 3%) scale(0.95);
+  }
+}
+
+/* Mạch điện và xung sáng chạy dọc đường mạch */
+.circuits {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  translate: calc(var(--mx) * 14px) calc(var(--my) * 14px);
+  transition: translate 0.6s ease-out;
+}
+
+.traces path {
+  fill: none;
+  stroke: rgba(232, 96, 10, 0.16);
+  stroke-width: 1.5;
+}
+
+.pads circle {
+  fill: #fff6ef;
+  stroke: rgba(232, 96, 10, 0.3);
+  stroke-width: 1.5;
+}
+
+.pulses path {
+  fill: none;
+  stroke: #ff7a1a;
+  stroke-width: 2.5;
+  stroke-linecap: round;
+  stroke-dasharray: 7 200;
+  stroke-dashoffset: 7;
+  opacity: 0;
+  filter: drop-shadow(0 0 4px rgba(255, 122, 26, 0.9));
+  animation: pulse-run linear infinite;
+}
+
+@keyframes pulse-run {
+  0% {
+    stroke-dashoffset: 7;
+    opacity: 0;
+  }
+  8% {
+    opacity: 1;
+  }
+  60% {
+    opacity: 1;
+  }
+  70%,
+  100% {
+    stroke-dashoffset: -100;
+    opacity: 0;
+  }
+}
+
+/* Nét vẽ tay bồng bềnh */
+.doodles {
+  position: absolute;
+  inset: 0;
+  translate: calc(var(--mx) * 26px) calc(var(--my) * 26px);
+  transition: translate 0.6s ease-out;
+}
+
+.doodle {
+  position: absolute;
+  color: rgba(232, 96, 10, 0.4);
+  animation: doodle-float 7s ease-in-out infinite;
+}
+
+@keyframes doodle-float {
+  0%,
+  100% {
+    transform: translateY(0) rotate(0deg);
+  }
+  50% {
+    transform: translateY(-10px) rotate(8deg);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .blob,
+  .doodle {
+    animation: none;
+  }
+
+  .pulses {
+    display: none;
+  }
+}
+
 .bubble {
   position: absolute;
   z-index: 2;

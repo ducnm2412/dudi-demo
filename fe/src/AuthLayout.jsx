@@ -1,6 +1,7 @@
 /* eslint-disable react-refresh/only-export-components */
 import { lazy, Suspense, useCallback, useState } from 'react';
 import Logo from './Logo';
+import StageBackdrop from './StageBackdrop';
 
 // Tách three.js ra chunk riêng để form hiện ngay, robot tải sau
 const Mascot = lazy(() => import('./mascot/Mascot'));
@@ -44,6 +45,7 @@ export default function AuthLayout({ mood, shakeKey, children }) {
   return (
     <div className="auth">
       <section className="stage">
+        <StageBackdrop />
         <Logo />
 
         <Suspense fallback={null}>
