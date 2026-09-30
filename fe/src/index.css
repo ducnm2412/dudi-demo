@@ -1,0 +1,413 @@
+/* Bảng màu: thành phố về đêm, robot đỏ, kính cyan */
+:root {
+  --night: #0e1030;
+  --deep: #171a45;
+  --line: #2c3170;
+  --field: #10133a;
+  --signal: #ed1c24; /* đỏ của logo */
+  --signal-hover: #ff3a42;
+  --visor: #4fd8ff;
+  --mist: #a9aed6;
+  --paper: #f4f5ff;
+  --error: #ff8a96;
+
+  --display: 'Bricolage Grotesque', 'Be Vietnam Pro', system-ui, sans-serif;
+  --text: 'Be Vietnam Pro', system-ui, 'Segoe UI', sans-serif;
+
+  color-scheme: dark;
+  font: 400 16px/1.55 var(--text);
+  color: var(--paper);
+  background: var(--night);
+  -webkit-font-smoothing: antialiased;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  background: var(--night);
+}
+
+p {
+  margin: 0;
+}
+
+a {
+  color: var(--visor);
+  text-underline-offset: 3px;
+}
+
+:focus-visible {
+  outline: 2px solid var(--visor);
+  outline-offset: 2px;
+}
+
+.center {
+  text-align: center;
+  padding: 48px 16px;
+  color: var(--mist);
+}
+
+.logo {
+  display: inline-flex;
+  border-radius: 8px;
+}
+
+.logo img {
+  display: block;
+  border-radius: 8px;
+}
+
+/* ---------- Khung trang đăng nhập / đăng ký ---------- */
+
+.auth {
+  min-height: 100svh;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(400px, 520px);
+}
+
+.stage {
+  container: stage / inline-size;
+  position: relative;
+  overflow: hidden;
+  min-height: 100svh;
+  background:
+    radial-gradient(120% 60% at 50% 108%, rgba(237, 28, 36, 0.32), transparent 60%),
+    radial-gradient(70% 55% at 22% 8%, rgba(79, 216, 255, 0.1), transparent 70%),
+    var(--night);
+}
+
+.stage .logo {
+  position: absolute;
+  top: 28px;
+  left: 40px;
+  z-index: 2;
+}
+
+.mascot {
+  position: absolute;
+  inset: 0;
+}
+
+.bubble {
+  position: absolute;
+  z-index: 2;
+  top: 20%;
+  left: calc(50% + 90px);
+  padding: 10px 14px;
+  border-radius: 14px 14px 14px 4px;
+  background: var(--paper);
+  color: var(--night);
+  font-size: 15px;
+  font-weight: 500;
+  white-space: nowrap;
+  opacity: 0;
+  transform: translateY(6px) scale(0.96);
+  transform-origin: bottom left;
+  transition: opacity 0.2s, transform 0.2s;
+  pointer-events: none;
+}
+
+.bubble.is-shown {
+  opacity: 1;
+  transform: none;
+}
+
+.stage-copy {
+  position: absolute;
+  z-index: 2;
+  left: 40px;
+  bottom: 40px;
+  max-width: 30ch;
+  display: none;
+}
+
+/* Khung đủ rộng: robot dời sang phải (xem Rig trong Mascot.jsx), tagline hiện ở góc trái */
+@container stage (min-width: 700px) {
+  .stage-copy {
+    display: block;
+  }
+
+  .bubble {
+    left: calc(50% + 230px);
+  }
+}
+
+.stage-title {
+  font-weight: 700;
+  font-variation-settings: 'wdth' 85;
+  font-size: clamp(26px, 2.6vw, 40px);
+  line-height: 1.08;
+  letter-spacing: -0.015em;
+  text-wrap: balance;
+}
+
+.stage-sub {
+  margin-top: 12px;
+  color: var(--mist);
+  font-size: 15px;
+}
+
+.panel {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 56px 48px;
+  background: var(--deep);
+  border-left: 1px solid var(--line);
+}
+
+.panel-inner {
+  width: 100%;
+  max-width: 360px;
+}
+
+.panel h1 {
+  margin: 0;
+  font-family: var(--display);
+  font-weight: 700;
+  font-variation-settings: 'wdth' 90;
+  font-size: 40px;
+  line-height: 1.1;
+  letter-spacing: -0.02em;
+}
+
+.lead {
+  margin: 8px 0 16px;
+  color: var(--mist);
+  font-size: 15px;
+}
+
+/* ---------- Form ---------- */
+
+form {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 0;
+}
+
+.field > span {
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.field-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+input {
+  font: inherit;
+  font-size: 15px;
+  height: 46px;
+  width: 100%;
+  padding: 0 14px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: var(--field);
+  color: var(--paper);
+  transition: border-color 0.15s, box-shadow 0.15s;
+}
+
+input::placeholder {
+  color: #6e73a6;
+}
+
+input:focus {
+  outline: none;
+  border-color: var(--visor);
+  box-shadow: 0 0 0 3px rgba(79, 216, 255, 0.18);
+}
+
+.password-field {
+  position: relative;
+  display: flex;
+}
+
+.password-field input {
+  padding-right: 46px;
+}
+
+.password-field input::-ms-reveal {
+  display: none;
+}
+
+.toggle-password {
+  position: absolute;
+  top: 50%;
+  right: 6px;
+  transform: translateY(-50%);
+  display: grid;
+  place-items: center;
+  width: 34px;
+  height: 34px;
+  padding: 0;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--mist);
+  cursor: pointer;
+}
+
+.toggle-password:hover,
+.toggle-password[aria-pressed='true'] {
+  color: var(--visor);
+}
+
+.checkbox {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 14px;
+  color: var(--mist);
+  cursor: pointer;
+  user-select: none;
+}
+
+.checkbox input {
+  width: 18px;
+  height: 18px;
+  margin: 0;
+  accent-color: var(--signal);
+  cursor: pointer;
+}
+
+button {
+  font: inherit;
+  cursor: pointer;
+}
+
+button.primary {
+  height: 48px;
+  margin-top: 4px;
+  border: 0;
+  border-radius: 10px;
+  background: var(--signal);
+  color: #fff;
+  font-weight: 600;
+  transition: background 0.15s;
+}
+
+button.primary:hover:not(:disabled) {
+  background: var(--signal-hover);
+}
+
+button.primary:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+
+button.ghost {
+  height: 36px;
+  padding: 0 14px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: transparent;
+  color: var(--paper);
+  font-size: 14px;
+}
+
+button.ghost:hover {
+  border-color: var(--mist);
+}
+
+.google-btn {
+  display: flex;
+  justify-content: center;
+  min-height: 44px;
+}
+
+.google-btn iframe {
+  color-scheme: normal;
+}
+
+.divider {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin: 12px 0;
+  font-size: 13px;
+  color: var(--mist);
+}
+
+.divider::before,
+.divider::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: var(--line);
+}
+
+.hint {
+  margin-top: -6px;
+  font-size: 13px;
+  color: var(--mist);
+}
+
+.error {
+  font-size: 14px;
+  color: var(--error);
+}
+
+/* ---------- Màn hình nhỏ ---------- */
+
+@media (max-width: 900px) {
+  .auth {
+    grid-template-columns: 1fr;
+  }
+
+  .stage {
+    height: 40svh;
+    min-height: 280px;
+  }
+
+  .stage .logo {
+    top: 20px;
+    left: 20px;
+  }
+
+  .bubble {
+    top: 12%;
+    left: calc(50% + 70px);
+  }
+
+  .panel {
+    align-items: flex-start;
+    padding: 32px 16px 48px;
+    border-left: 0;
+    border-top: 1px solid var(--line);
+  }
+
+  .panel h1 {
+    font-size: 32px;
+  }
+
+}
+
+@media (max-width: 420px) {
+  .field-row {
+    grid-template-columns: 1fr;
+  }
+
+  .bubble {
+    left: auto;
+    right: 16px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .bubble {
+    transition: opacity 0.2s;
+    transform: none;
+  }
+}
