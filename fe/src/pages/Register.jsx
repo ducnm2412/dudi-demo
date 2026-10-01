@@ -160,7 +160,7 @@ export default function Register() {
       <form onSubmit={onVerify}>
         <OtpShooter ref={shooter} disabled={submitting} onChange={onCodeChange} {...bind('code')} />
         <p className="hint otp-hint">
-          Kéo quả số lên và thả để bắn vào ô đang ngắm, hoặc chạm để bắn vào ô trống kế tiếp. Bắn nhầm thì chạm vào ô đó để bắn rơi. Có thể gõ phím số hoặc dán mã.
+          Kéo quả số lùi xuống như ná cao su rồi thả để bắn lên. Từ ô 3, ô trống sẽ chạy qua lại, càng về sau càng nhanh. Bắn nhầm thì chạm vào ô đó để bắn rơi. Có thể gõ phím số hoặc dán mã.
         </p>
 
         {error && <p className="error" role="alert">{error}</p>}
