@@ -5,6 +5,7 @@ import { useAuth } from '../AuthContext';
 import AuthLayout, { useMascotMood } from '../AuthLayout';
 import FacebookButton from '../FacebookButton';
 import GoogleButton from '../GoogleButton';
+import OtpShooter from '../OtpShooter';
 import PasswordInput from '../PasswordInput';
 
 // Có cấu hình Firebase thì xác minh SĐT bằng Firebase Phone Auth,
@@ -37,6 +38,7 @@ export default function Register() {
   const [error, setError] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const confirmation = useRef(null); // kết quả signInWithPhoneNumber của Firebase
+  const shooter = useRef(null); // mini game nhập mã
 
   const onChange = (e) => setForm({ ...form, [e.target.name]: e.target.value });
 
@@ -72,6 +74,7 @@ export default function Register() {
     confirmation.current = await sendCode(phone, RECAPTCHA_ID);
     setOtp({ phone, maskedPhone: maskPhone(phone) });
     setCode('');
+    shooter.current?.clear();
     setResendIn(RESEND_SECONDS);
   };
 
@@ -96,7 +99,7 @@ export default function Register() {
     });
   };
 
-  // Bước 2: nhập mã để tạo tài khoản. Mã sai thì xoá ô để gõ lại ngay.
+  // Bước 2: bắn đủ 6 số để tạo tài khoản. Mã sai thì các ô rung lên rồi xoá để bắn lại.
   const verify = (value) =>
     run(
       async () => {
@@ -109,7 +112,10 @@ export default function Register() {
           finish(await api('/api/auth/register/verify', { method: 'POST', body: { phone: otp.phone, code: value } }));
         }
       },
-      () => setCode('')
+      () => {
+        setCode('');
+        shooter.current?.reject();
+      }
     );
 
   const onVerify = (e) => {
@@ -117,8 +123,7 @@ export default function Register() {
     verify(code);
   };
 
-  const onCodeChange = (e) => {
-    const value = e.target.value.replace(/\D/g, '').slice(0, 6);
+  const onCodeChange = (value) => {
     setCode(value);
     if (value.length === 6 && !submitting) verify(value);
   };
@@ -131,6 +136,7 @@ export default function Register() {
         const data = await api('/api/auth/register/resend', { method: 'POST', body: { phone: otp.phone } });
         setOtp(data);
         setCode('');
+        shooter.current?.clear();
         setResendIn(data.resendIn);
       }
     });
@@ -139,7 +145,7 @@ export default function Register() {
     <>
       <h1>Xác minh số điện thoại</h1>
       <p className="lead">
-        Nhập mã 6 số vừa gửi tới <strong>{otp.maskedPhone}</strong>.{' '}
+        Bắn mã 6 số vừa gửi tới <strong>{otp.maskedPhone}</strong>.{' '}
         <button type="button" className="text-btn" onClick={() => { setOtp(null); setError(''); }}>
           Đổi số
         </button>
@@ -152,23 +158,10 @@ export default function Register() {
       )}
 
       <form onSubmit={onVerify}>
-        <label className="field">
-          <span>Mã xác minh</span>
-          <input
-            className="otp-input"
-            name="code"
-            value={code}
-            onChange={onCodeChange}
-            inputMode="numeric"
-            autoComplete="one-time-code"
-            pattern="\d{6}"
-            maxLength={6}
-            placeholder="••••••"
-            autoFocus
-            required
-            {...bind('code')}
-          />
-        </label>
+        <OtpShooter ref={shooter} disabled={submitting} onChange={onCodeChange} {...bind('code')} />
+        <p className="hint otp-hint">
+          Kéo quả số lên và thả để bắn vào ô đang ngắm, hoặc chạm để bắn vào ô trống kế tiếp. Bắn nhầm thì chạm vào ô đó để bắn rơi. Có thể gõ phím số hoặc dán mã.
+        </p>
 
         {error && <p className="error" role="alert">{error}</p>}
 
